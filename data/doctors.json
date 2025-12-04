@@ -1,0 +1,35 @@
+[
+  {
+    "id": "1",
+    "name": "Dr. Prem",
+    "specialty": "Gynecology + 2 others",
+    "languages": ["English", "Hindi"],
+    "experience": 8,
+    "rating": 4.8,
+    "pricePerMin": 15,
+    "freeMinutes": 5,
+    "image": "https://randomuser.me/api/portraits/men/32.jpg"
+  },
+  {
+    "id": "2",
+    "name": "Dr. Sarah Johnson",
+    "specialty": "Internal Medicine",
+    "languages": ["English"],
+    "experience": 12,
+    "rating": 4.9,
+    "pricePerMin": 20,
+    "freeMinutes": 3,
+    "image": "https://randomuser.me/api/portraits/women/44.jpg"
+  },
+  {
+    "id": "3",
+    "name": "Dr. Rajesh Kumar",
+    "specialty": "Cardiology",
+    "languages": ["English", "Hindi", "Tamil"],
+    "experience": 15,
+    "rating": 4.7,
+    "pricePerMin": 25,
+    "freeMinutes": 2,
+    "image": "https://randomuser.me/api/portraits/men/55.jpg"
+  }
+]
