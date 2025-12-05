@@ -3,121 +3,128 @@ import { Ionicons } from '@expo/vector-icons';
 import Colors from '@/constants/Color';
 import { TouchableOpacity, View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import FloatingCallWindow from '@/components/FloatingCallWindow';
 
 export default function TabLayout() {
   const router = useRouter();
+  const notificationCount = 2;
 
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.darkGray,
-        tabBarStyle: {
-          backgroundColor: Colors.white,
-          borderTopColor: Colors.mediumGray,
-        },
-        headerStyle: {
-          backgroundColor: Colors.primary,
-          height: 70,
-        },
-        headerTintColor: Colors.white,
-        headerTitleStyle: {
-          fontWeight: '600',
-          fontSize: 22,
-        },
-        headerLeft: () => (
-          <View style={styles.headerLeftContainer}>
-            <TouchableOpacity 
-              style={styles.backButton}
-              onPress={() => router.back()}
-            >
-              <Ionicons name="arrow-back" size={28} color={Colors.white} />
-            </TouchableOpacity>
-            {/* Spacer to create space between back button and title */}
-            <View style={styles.spacer} />
-          </View>
-        ),
-        headerRight: () => (
-          <View style={styles.headerIcons}>
-            <TouchableOpacity 
-              style={styles.iconButton} 
-              onPress={() => router.push('/(auth)/profile' as any)}
-            >
-              <Ionicons name="person-circle-outline" size={28} color={Colors.white} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.iconButton}>
-              <Ionicons name="notifications-outline" size={26} color={Colors.white} />
-            </TouchableOpacity>
-          </View>
-        ),
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="home"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" size={size} color={color} />
-          ),
-          headerTitle: () => (
-            <View style={styles.headerTitleContainer}>
-              <Ionicons name="home" size={28} color={Colors.white} style={styles.titleIcon} />
-              <Text style={styles.headerTitle}>Home</Text>
+    <>
+      <Tabs
+        screenOptions={{
+          headerShown: true,
+          headerStyle: {
+            backgroundColor: Colors.primary,
+          },
+          headerTintColor: Colors.white,
+          tabBarActiveTintColor: Colors.primary,
+          tabBarInactiveTintColor: Colors.mediumGray,
+          headerLeft: () => (
+            <View style={styles.headerLeftContainer}>
+              <TouchableOpacity 
+                style={styles.backButton}
+                onPress={() => router.back()}
+              >
+                <Ionicons name="arrow-back" size={24} color={Colors.white} />
+              </TouchableOpacity>
             </View>
           ),
-        }}
-      />
-      <Tabs.Screen
-        name="consult"
-        options={{
-          title: 'Consult',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="medical-outline" size={size} color={color} />
-          ),
-          headerTitle: () => (
-            <View style={styles.headerTitleContainer}>
-              <Ionicons name="medical" size={28} color={Colors.white} style={styles.titleIcon} />
-              <Text style={styles.headerTitle}>Consult</Text>
+          headerRight: () => (
+            <View style={styles.headerIcons}>
+              <TouchableOpacity 
+                style={styles.iconButton}
+                onPress={() => router.push('/(auth)/profile' as any)}
+              >
+                <Ionicons name="person-circle-outline" size={28} color={Colors.white} />
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.iconButton}
+                onPress={() => router.push('/notifications' as any)}
+              >
+                <View style={styles.notificationContainer}>
+                  <Ionicons name="notifications-outline" size={28} color={Colors.white} />
+                  {notificationCount > 0 && (
+                    <View style={styles.notificationBadge}>
+                      <Text style={styles.notificationText}>
+                        {notificationCount > 9 ? '9+' : notificationCount}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </TouchableOpacity>
             </View>
           ),
-        }}
-      />
-      <Tabs.Screen
-        name="shop"
-        options={{
-          title: 'Shop',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="cart-outline" size={size} color={color} />
-          ),
-          headerTitle: () => (
-            <View style={styles.headerTitleContainer}>
-              <Ionicons name="cart" size={28} color={Colors.white} style={styles.titleIcon} />
-              <Text style={styles.headerTitle}>Shop</Text>
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: 'Settings',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="settings-outline" size={size} color={color} />
-          ),
-          headerTitle: () => (
-            <View style={styles.headerTitleContainer}>
-              <Ionicons name="settings" size={28} color={Colors.white} style={styles.titleIcon} />
-              <Text style={styles.headerTitle}>Settings</Text>
-            </View>
-          ),
-        }}
-      />
-    </Tabs>
+        }}>
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: 'Home',
+            tabBarIcon: ({ color }) => (
+              <Ionicons name="home-outline" size={24} color={color} />
+            ),
+            headerTitle: () => (
+              <View style={styles.headerTitleContainer}>
+                <Ionicons name="home" size={24} color={Colors.white} style={styles.titleIcon} />
+                <Text style={styles.headerTitle}>Home</Text>
+              </View>
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="home"
+          options={{
+            href: null,
+          }}
+        />
+        <Tabs.Screen
+          name="consult"
+          options={{
+            title: 'Consult',
+            tabBarIcon: ({ color }) => (
+              <Ionicons name="chatbubbles-outline" size={24} color={color} />
+            ),
+            headerTitle: () => (
+              <View style={styles.headerTitleContainer}>
+                <Ionicons name="chatbubbles" size={24} color={Colors.white} style={styles.titleIcon} />
+                <Text style={styles.headerTitle}>Consult</Text>
+              </View>
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="shop"
+          options={{
+            title: 'Shop',
+            tabBarIcon: ({ color }) => (
+              <Ionicons name="cart-outline" size={24} color={color} />
+            ),
+            headerTitle: () => (
+              <View style={styles.headerTitleContainer}>
+                <Ionicons name="cart" size={24} color={Colors.white} style={styles.titleIcon} />
+                <Text style={styles.headerTitle}>Shop</Text>
+              </View>
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="settings"
+          options={{
+            title: 'Settings',
+            tabBarIcon: ({ color }) => (
+              <Ionicons name="settings-outline" size={24} color={color} />
+            ),
+            headerTitle: () => (
+              <View style={styles.headerTitleContainer}>
+                <Ionicons name="settings" size={24} color={Colors.white} style={styles.titleIcon} />
+                <Text style={styles.headerTitle}>Settings</Text>
+              </View>
+            ),
+          }}
+        />
+      </Tabs>
+      <FloatingCallWindow />
+    </>
   );
 }
 
@@ -131,7 +138,7 @@ const styles = StyleSheet.create({
     marginLeft: 16,
   },
   spacer: {
-    width: 20, // Space between back button and title
+    width: 20,
   },
   headerTitleContainer: {
     flexDirection: 'row',
@@ -155,5 +162,27 @@ const styles = StyleSheet.create({
   iconButton: {
     marginLeft: 16,
     padding: 4,
+    position: 'relative',
+  },
+  notificationContainer: {
+    position: 'relative',
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    backgroundColor: Colors.danger,
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: Colors.primary,
+  },
+  notificationText: {
+    color: Colors.white,
+    fontSize: 10,
+    fontWeight: 'bold',
   },
 });

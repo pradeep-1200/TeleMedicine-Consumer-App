@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,35 +9,54 @@ import {
   Platform,
   Alert,
   Linking,
+  ImageBackground,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Colors from '@/constants/Color';
 import ZegoService from '@/services/ZegoService';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCall } from '@/contexts/CallContext';
 
 export default function CallScreen() {
   const params = useLocalSearchParams();
   const { user } = useAuth();
+  const {
+    isInCall,
+    isMinimized,
+    callDuration,
+    isMuted,
+    isCameraOn,
+    startCall: startGlobalCall,
+    endCall: endGlobalCall,
+    minimizeCall,
+    toggleMute: toggleGlobalMute,
+    toggleCamera: toggleGlobalCamera,
+  } = useCall();
+
   const [isCallActive, setIsCallActive] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [isCameraOn, setIsCameraOn] = useState(true);
-  const [callDuration, setCallDuration] = useState(0);
   const [callType, setCallType] = useState<'video' | 'audio'>('video');
   const [doctorPhone] = useState('+91 98765 43210');
-  const timerRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
-    startCall();
+    if (!isInCall) {
+      initiateCall();
+    }
+
     return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
+      if (!isMinimized) {
+        handleEndCall();
       }
-      ZegoService.endCall('room123');
     };
   }, []);
 
-  const startCall = async () => {
+  useEffect(() => {
+    if (isMinimized) {
+      router.push('/(tabs)/home');
+    }
+  }, [isMinimized]);
+
+  const initiateCall = async () => {
     try {
       const roomID = `room_${Date.now()}`;
       const userID = user?.id || 'user_' + Date.now();
@@ -45,11 +64,7 @@ export default function CallScreen() {
 
       await ZegoService.startCall(roomID, userID, userName);
       setIsCallActive(true);
-
-      // Start timer
-      timerRef.current = setInterval(() => {
-        setCallDuration(prev => prev + 1);
-      }, 1000);
+      startGlobalCall();
     } catch (error) {
       console.error('Failed to start call:', error);
     }
@@ -58,7 +73,7 @@ export default function CallScreen() {
   const toggleMute = async () => {
     try {
       await ZegoService.toggleMicrophone(!isMuted);
-      setIsMuted(!isMuted);
+      toggleGlobalMute();
     } catch (error) {
       console.error('Failed to toggle microphone:', error);
     }
@@ -67,18 +82,22 @@ export default function CallScreen() {
   const toggleCamera = async () => {
     try {
       await ZegoService.toggleCamera(!isCameraOn);
-      setIsCameraOn(!isCameraOn);
+      toggleGlobalCamera();
     } catch (error) {
       console.error('Failed to toggle camera:', error);
     }
   };
 
-  const endCall = async () => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
+  const handleEndCall = async () => {
+    try {
+      await ZegoService.endCall('room123');
+      endGlobalCall();
+      router.back();
+    } catch (error) {
+      console.error('Failed to end call:', error);
+      endGlobalCall();
+      router.back();
     }
-    await ZegoService.endCall('room123');
-    router.back();
   };
 
   const makePhoneCall = () => {
@@ -94,215 +113,243 @@ export default function CallScreen() {
             Linking.openURL(`tel:${phoneNumber}`);
           },
         },
-      ]
+      ],
     );
   };
 
   const switchToAudio = () => {
     setCallType('audio');
-    setIsCameraOn(false);
+    toggleCamera();
     Alert.alert('Switched to Audio', 'Video call switched to audio only');
   };
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    return `${mins.toString().padStart(2, '0')}:${secs
+      .toString()
+      .padStart(2, '0')}`;
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Call Header */}
-      <View style={styles.header}>
-        <Text style={styles.callStatus}>
-          {isCallActive ? 'Call Connected' : 'Connecting...'}
-        </Text>
-        <Text style={styles.callTimer}>
-          {formatTime(callDuration)}
-        </Text>
-      </View>
+    <View style={styles.container}>
+      {/* Doctor's Video Feed (Full Screen Background) */}
+      <ImageBackground
+        source={{
+          uri: 'https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg',
+        }}
+        style={styles.doctorVideoFeed}
+        resizeMode="cover"
+      >
+        {/* Top Bar with Doctor Info */}
+        <SafeAreaView style={styles.topBar}>
+          <View style={styles.doctorInfoBar}>
+            <Image
+              source={{
+                uri: 'https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg',
+              }}
+              style={styles.doctorAvatarSmall}
+            />
+            <View style={styles.doctorDetails}>
+              <Text style={styles.doctorNameSmall}>Dr. Prem</Text>
+              <Text style={styles.callTimerSmall}>{formatTime(callDuration)}</Text>
+            </View>
+          </View>
 
-      {/* Doctor Info */}
-      <View style={styles.doctorInfo}>
-        <Image
-          source={{ uri: 'https://randomuser.me/api/portraits/men/32.jpg' }}
-          style={styles.doctorImage}
-        />
-        <Text style={styles.doctorName}>Dr. Prem</Text>
-        <Text style={styles.doctorSpecialty}>Gynecologist</Text>
-        <Text style={styles.doctorPhone}>{doctorPhone}</Text>
-        <TouchableOpacity style={styles.emergencyCallButton} onPress={makePhoneCall}>
-          <Ionicons name="call" size={16} color={Colors.white} />
-          <Text style={styles.emergencyCallText}>Emergency Call</Text>
-        </TouchableOpacity>
-      </View>
+          {/* Minimize Button */}
+          <TouchableOpacity style={styles.minimizeButton} onPress={minimizeCall}>
+            <Ionicons name="chevron-down" size={24} color={Colors.white} />
+          </TouchableOpacity>
+        </SafeAreaView>
 
-      {/* Call Controls */}
-      <View style={styles.controlsContainer}>
-        <TouchableOpacity
-          style={[styles.controlButton, isMuted && styles.controlButtonActive]}
-          onPress={toggleMute}>
-          <Ionicons
-            name={isMuted ? 'mic-off' : 'mic'}
-            size={24}
-            color={isMuted ? Colors.white : Colors.black}
-          />
-          <Text style={styles.controlText}>{isMuted ? 'Unmute' : 'Mute'}</Text>
-        </TouchableOpacity>
+        {/* Patient's Video (Small Floating Window - Top Right) */}
+        <View style={styles.patientVideoContainer}>
+          <ImageBackground
+            source={{
+              uri: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg',
+            }}
+            style={styles.patientVideo}
+            imageStyle={styles.patientVideoImage}
+          >
+            <View style={styles.patientLabel}>
+              <Text style={styles.patientLabelText}>You</Text>
+            </View>
+          </ImageBackground>
+        </View>
 
-        <TouchableOpacity
-          style={[styles.controlButton, !isCameraOn && styles.controlButtonActive]}
-          onPress={toggleCamera}>
-          <Ionicons
-            name={isCameraOn ? 'videocam' : 'videocam-off'}
-            size={24}
-            color={isCameraOn ? Colors.black : Colors.white}
-          />
-          <Text style={styles.controlText}>
-            {isCameraOn ? 'Camera Off' : 'Camera On'}
-          </Text>
-        </TouchableOpacity>
+        {/* Bottom Controls */}
+        <View style={styles.bottomControls}>
+          {/* Control Buttons */}
+          <View style={styles.controlsRow}>
+            <TouchableOpacity
+              style={[styles.controlBtn, isMuted && styles.controlBtnActive]}
+              onPress={toggleMute}
+            >
+              <Ionicons
+                name={isMuted ? 'mic-off' : 'mic'}
+                size={28}
+                color={Colors.white}
+              />
+            </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.controlButton, styles.speakerButton]}
-          onPress={() => ZegoService.toggleSpeaker(true)}>
-          <Ionicons name="volume-high" size={24} color={Colors.black} />
-          <Text style={styles.controlText}>Speaker</Text>
-        </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.controlBtn, !isCameraOn && styles.controlBtnActive]}
+              onPress={toggleCamera}
+            >
+              <Ionicons
+                name={isCameraOn ? 'videocam' : 'videocam-off'}
+                size={28}
+                color={Colors.white}
+              />
+            </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.controlButton, callType === 'audio' && styles.controlButtonActive]}
-          onPress={switchToAudio}>
-          <Ionicons name="headset" size={24} color={callType === 'audio' ? Colors.white : Colors.black} />
-          <Text style={styles.controlText}>Audio</Text>
-        </TouchableOpacity>
-      </View>
+            <TouchableOpacity
+              style={styles.controlBtn}
+              onPress={() => ZegoService.toggleSpeaker(true)}
+            >
+              <Ionicons name="volume-high" size={28} color={Colors.white} />
+            </TouchableOpacity>
 
-      {/* End Call Button */}
-      <TouchableOpacity style={styles.endCallButton} onPress={endCall}>
-        <Ionicons name="call" size={24} color={Colors.white} style={{ transform: [{ rotate: '135deg' }] }} />
-      </TouchableOpacity>
+            <TouchableOpacity style={styles.controlBtn} onPress={switchToAudio}>
+              <Ionicons name="headset" size={28} color={Colors.white} />
+            </TouchableOpacity>
+          </View>
 
-      {/* Minimize Button */}
-      <TouchableOpacity
-        style={styles.minimizeButton}
-        onPress={() => router.push('/(tabs)/home')}>
-        <Ionicons name="chevron-down" size={24} color={Colors.white} />
-      </TouchableOpacity>
-    </SafeAreaView>
+          {/* End Call Button */}
+          <TouchableOpacity style={styles.endCallBtn} onPress={handleEndCall}>
+            <Ionicons name="call" size={32} color={Colors.white} />
+          </TouchableOpacity>
+        </View>
+      </ImageBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#000',
   },
-  header: {
-    paddingTop: Platform.OS === 'ios' ? 50 : 30,
-    paddingHorizontal: 16,
-    paddingBottom: 20,
-    alignItems: 'center',
-  },
-  callStatus: {
-    color: Colors.white,
-    fontSize: 16,
-    marginBottom: 8,
-  },
-  callTimer: {
-    color: Colors.white,
-    fontSize: 32,
-    fontWeight: '300',
-  },
-  doctorInfo: {
+  doctorVideoFeed: {
     flex: 1,
-    justifyContent: 'center',
+    width: '100%',
+    height: '100%',
+  },
+  topBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: Platform.OS === 'ios' ? 10 : 20,
+    paddingBottom: 12,
+    backgroundColor: 'rgba(0,0,0,0.3)',
   },
-  doctorImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    marginBottom: 20,
-  },
-  doctorName: {
-    color: Colors.white,
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  doctorSpecialty: {
-    color: Colors.mediumGray,
-    fontSize: 16,
-    marginBottom: 8,
-  },
-  doctorPhone: {
-    color: Colors.white,
-    fontSize: 14,
-    marginBottom: 16,
-  },
-  emergencyCallButton: {
+  doctorInfoBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.danger,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    flex: 1,
   },
-  emergencyCallText: {
-    color: Colors.white,
-    fontSize: 12,
-    fontWeight: '600',
-    marginLeft: 4,
-  },
-  controlsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingHorizontal: 16,
-    paddingBottom: 30,
-    flexWrap: 'wrap',
-  },
-  controlButton: {
-    alignItems: 'center',
-    backgroundColor: Colors.white,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: 'center',
-    marginHorizontal: 5,
-    marginVertical: 5,
-  },
-  controlButtonActive: {
-    backgroundColor: Colors.danger,
-  },
-  controlText: {
-    color: Colors.white,
-    fontSize: 12,
-    marginTop: 4,
-  },
-  speakerButton: {
-    backgroundColor: Colors.white,
-  },
-  endCallButton: {
-    position: 'absolute',
-    bottom: 40,
-    alignSelf: 'center',
-    backgroundColor: Colors.danger,
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  minimizeButton: {
-    position: 'absolute',
-    top: Platform.OS === 'ios' ? 60 : 40,
-    right: 20,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+  doctorAvatarSmall: {
     width: 40,
     height: 40,
     borderRadius: 20,
+    marginRight: 12,
+    borderWidth: 2,
+    borderColor: Colors.white,
+  },
+  doctorDetails: {
+    flex: 1,
+  },
+  doctorNameSmall: {
+    color: Colors.white,
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  callTimerSmall: {
+    color: Colors.white,
+    fontSize: 14,
+    opacity: 0.9,
+  },
+  minimizeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  patientVideoContainer: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 100 : 90,
+    right: 16,
+    width: 120,
+    height: 160,
+    borderRadius: 12,
+    overflow: 'hidden',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+  },
+  patientVideo: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'flex-end',
+  },
+  patientVideoImage: {
+    borderRadius: 12,
+  },
+  patientLabel: {
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+  },
+  patientLabelText: {
+    color: Colors.white,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  bottomControls: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 20,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 30,
+    paddingTop: 20,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  controlsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    marginBottom: 20,
+  },
+  controlBtn: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  controlBtnActive: {
+    backgroundColor: Colors.danger,
+  },
+  endCallBtn: {
+    alignSelf: 'center',
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: Colors.danger,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
 });

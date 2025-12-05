@@ -1,66 +1,86 @@
-import React, { createContext, useState, useContext, ReactNode } from 'react';
-import { CallState } from '@/types';
+import React, { createContext, useContext, useState, useRef, ReactNode } from 'react';
 
 interface CallContextType {
-  callState: CallState;
-  startCall: (roomID: string, callType: 'audio' | 'video') => void;
-  endCall: () => void;
-  toggleMute: () => void;
-  toggleCamera: () => void;
+  isInCall: boolean;
+  isMinimized: boolean;
+  callDuration: number;
   isMuted: boolean;
   isCameraOn: boolean;
+  startCall: () => void;
+  endCall: () => void;
+  minimizeCall: () => void;
+  maximizeCall: () => void;
+  toggleMute: () => void;
+  toggleCamera: () => void;
+  timerRef: React.MutableRefObject<ReturnType<typeof setInterval> | null>;
 }
 
 const CallContext = createContext<CallContextType | undefined>(undefined);
 
 export const CallProvider = ({ children }: { children: ReactNode }) => {
-  const [callState, setCallState] = useState<CallState>({
-    isCalling: false,
-    isReceivingCall: false,
-    callType: 'video',
-    roomID: undefined,
-  });
+  const [isInCall, setIsInCall] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [callDuration, setCallDuration] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [isCameraOn, setIsCameraOn] = useState(true);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const startCall = (roomID: string, callType: 'audio' | 'video') => {
-    setCallState({
-      isCalling: true,
-      isReceivingCall: false,
-      callType,
-      roomID,
-    });
+  const startCall = () => {
+    setIsInCall(true);
+    setIsMinimized(false);
+    setCallDuration(0);
+    setIsCameraOn(true);
+    
+    timerRef.current = setInterval(() => {
+      setCallDuration(prev => prev + 1);
+    }, 1000);
   };
 
   const endCall = () => {
-    setCallState({
-      isCalling: false,
-      isReceivingCall: false,
-      callType: 'video',
-      roomID: undefined,
-    });
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    setIsInCall(false);
+    setIsMinimized(false);
+    setCallDuration(0);
     setIsMuted(false);
     setIsCameraOn(true);
   };
 
+  const minimizeCall = () => {
+    setIsMinimized(true);
+  };
+
+  const maximizeCall = () => {
+    setIsMinimized(false);
+  };
+
   const toggleMute = () => {
-    setIsMuted(!isMuted);
+    setIsMuted(prev => !prev);
   };
 
   const toggleCamera = () => {
-    setIsCameraOn(!isCameraOn);
+    setIsCameraOn(prev => !prev);
   };
 
   return (
-    <CallContext.Provider value={{
-      callState,
-      startCall,
-      endCall,
-      toggleMute,
-      toggleCamera,
-      isMuted,
-      isCameraOn,
-    }}>
+    <CallContext.Provider
+      value={{
+        isInCall,
+        isMinimized,
+        callDuration,
+        isMuted,
+        isCameraOn,
+        startCall,
+        endCall,
+        minimizeCall,
+        maximizeCall,
+        toggleMute,
+        toggleCamera,
+        timerRef,
+      }}
+    >
       {children}
     </CallContext.Provider>
   );
@@ -68,8 +88,8 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
 
 export const useCall = () => {
   const context = useContext(CallContext);
-  if (context === undefined) {
-    throw new Error('useCall must be used within a CallProvider');
+  if (!context) {
+    throw new Error('useCall must be used within CallProvider');
   }
   return context;
 };
