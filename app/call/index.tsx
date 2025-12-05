@@ -7,6 +7,8 @@ import {
   Image,
   SafeAreaView,
   Platform,
+  Alert,
+  Linking,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,6 +23,8 @@ export default function CallScreen() {
   const [isMuted, setIsMuted] = useState(false);
   const [isCameraOn, setIsCameraOn] = useState(true);
   const [callDuration, setCallDuration] = useState(0);
+  const [callType, setCallType] = useState<'video' | 'audio'>('video');
+  const [doctorPhone] = useState('+91 98765 43210');
   const timerRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
@@ -77,6 +81,29 @@ export default function CallScreen() {
     router.back();
   };
 
+  const makePhoneCall = () => {
+    Alert.alert(
+      'Call Doctor',
+      `Call Dr. Prem at ${doctorPhone}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Call',
+          onPress: () => {
+            const phoneNumber = doctorPhone.replace(/\s/g, '');
+            Linking.openURL(`tel:${phoneNumber}`);
+          },
+        },
+      ]
+    );
+  };
+
+  const switchToAudio = () => {
+    setCallType('audio');
+    setIsCameraOn(false);
+    Alert.alert('Switched to Audio', 'Video call switched to audio only');
+  };
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -103,6 +130,11 @@ export default function CallScreen() {
         />
         <Text style={styles.doctorName}>Dr. Prem</Text>
         <Text style={styles.doctorSpecialty}>Gynecologist</Text>
+        <Text style={styles.doctorPhone}>{doctorPhone}</Text>
+        <TouchableOpacity style={styles.emergencyCallButton} onPress={makePhoneCall}>
+          <Ionicons name="call" size={16} color={Colors.white} />
+          <Text style={styles.emergencyCallText}>Emergency Call</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Call Controls */}
@@ -137,6 +169,13 @@ export default function CallScreen() {
           <Ionicons name="volume-high" size={24} color={Colors.black} />
           <Text style={styles.controlText}>Speaker</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.controlButton, callType === 'audio' && styles.controlButtonActive]}
+          onPress={switchToAudio}>
+          <Ionicons name="headset" size={24} color={callType === 'audio' ? Colors.white : Colors.black} />
+          <Text style={styles.controlText}>Audio</Text>
+        </TouchableOpacity>
       </View>
 
       {/* End Call Button */}
@@ -160,8 +199,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#1A1A1A',
   },
   header: {
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
-    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 50 : 30,
+    paddingHorizontal: 16,
+    paddingBottom: 20,
     alignItems: 'center',
   },
   callStatus: {
@@ -194,21 +234,43 @@ const styles = StyleSheet.create({
   doctorSpecialty: {
     color: Colors.mediumGray,
     fontSize: 16,
+    marginBottom: 8,
+  },
+  doctorPhone: {
+    color: Colors.white,
+    fontSize: 14,
+    marginBottom: 16,
+  },
+  emergencyCallButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.danger,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  emergencyCallText: {
+    color: Colors.white,
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 4,
   },
   controlsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingHorizontal: 16,
+    paddingBottom: 30,
+    flexWrap: 'wrap',
   },
   controlButton: {
     alignItems: 'center',
     backgroundColor: Colors.white,
-    width: 70,
-    height: 70,
-    borderRadius: 35,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     justifyContent: 'center',
-    marginHorizontal: 10,
+    marginHorizontal: 5,
+    marginVertical: 5,
   },
   controlButtonActive: {
     backgroundColor: Colors.danger,

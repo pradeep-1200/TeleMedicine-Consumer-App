@@ -98,33 +98,45 @@ export default function MyBookingsScreen() {
         </View>
       </View>
 
-      {/* Appointments List */}
-      <FlatList
-        data={filteredAppointments}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <AppointmentCard
-            appointment={item}
-            onStartCall={() => handleStartCall(item.id)}
-            onViewDetails={() => handleViewDetails(item.id)}
-          />
-        )}
-        contentContainerStyle={styles.listContent}
-        ListEmptyComponent={
+      {/* Content */}
+      {activeTab === 'Appointments' ? (
+        <FlatList
+          data={filteredAppointments}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <AppointmentCard
+              appointment={item}
+              onStartCall={() => handleStartCall(item.id)}
+              onViewDetails={() => handleViewDetails(item.id)}
+            />
+          )}
+          contentContainerStyle={styles.listContent}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Ionicons name="calendar" size={64} color={Colors.mediumGray} />
+              <Text style={styles.emptyText}>No appointments found</Text>
+              <Text style={styles.emptySubtext}>
+                Book your first consultation to get started
+              </Text>
+              <TouchableOpacity
+                style={styles.bookButton}
+                onPress={() => router.push('/(tabs)/consult')}>
+                <Text style={styles.bookButtonText}>Book Appointment</Text>
+              </TouchableOpacity>
+            </View>
+          }
+        />
+      ) : (
+        <View style={styles.ordersContainer}>
           <View style={styles.emptyContainer}>
-            <Ionicons name="calendar" size={64} color={Colors.mediumGray} />
-            <Text style={styles.emptyText}>No appointments found</Text>
+            <Ionicons name="receipt" size={64} color={Colors.mediumGray} />
+            <Text style={styles.emptyText}>No orders found</Text>
             <Text style={styles.emptySubtext}>
-              Book your first consultation to get started
+              Your prescriptions and medical orders will appear here
             </Text>
-            <TouchableOpacity
-              style={styles.bookButton}
-              onPress={() => router.push('/(tabs)/consult')}>
-              <Text style={styles.bookButtonText}>Book Appointment</Text>
-            </TouchableOpacity>
           </View>
-        }
-      />
+        </View>
+      )}
 
       {/* Quick Actions */}
       <View style={styles.quickActions}>
@@ -287,5 +299,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     marginLeft: 8,
+  },
+  ordersContainer: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
   },
 });

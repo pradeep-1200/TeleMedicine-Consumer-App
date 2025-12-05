@@ -39,6 +39,7 @@
     "web": {
       "favicon": "./assets/images/favicon.png"
     },
+    "scheme": "mediconnect",
     "plugins": [
       "expo-router"
     ],

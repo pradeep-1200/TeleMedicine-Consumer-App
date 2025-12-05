@@ -1,26 +1,27 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import Colors from '@/constants/Color';
 
 const concerns = [
-  { id: '1', title: 'Hypertension', color: '#FF6B6B' },
-  { id: '2', title: 'Anxiety', color: '#4ECDC4' },
-  { id: '3', title: 'Obesity', color: '#FFD166' },
-  { id: '4', title: 'Diabetes', color: '#06D6A0' },
-  { id: '5', title: 'Hypertension', color: '#118AB2' },
-  { id: '6', title: 'Diabetes', color: '#073B4C' },
-  { id: '7', title: 'Rubella', color: '#7209B7' },
-  { id: '8', title: 'Hypothermia', color: '#F72585' },
-  { id: '9', title: 'Frostbite', color: '#3A0CA3' },
+  { id: '1', title: 'Hypertension', color: '#FF6B6B', image: require('@/assets/images/Hypertionsion.png') },
+  { id: '2', title: 'Anxiety', color: '#4ECDC4', image: require('@/assets/images/Anxiety.png') },
+  { id: '3', title: 'Obesity', color: '#FFD166', image: require('@/assets/images/Obesity.png') },
+  { id: '4', title: 'Diabetes', color: '#06D6A0', image: require('@/assets/images/diabities.png') },
+  { id: '5', title: 'Hypertension', color: '#118AB2', image: require('@/assets/images/Hypertionsion.png') },
+  { id: '6', title: 'Diabetes', color: '#073B4C', image: require('@/assets/images/diabities.png') },
+  { id: '7', title: 'Rubella', color: '#7209B7', image: require('@/assets/images/Rubella.png') },
+  { id: '8', title: 'Hypothermia', color: '#F72585', image: require('@/assets/images/Hypothermia.png') },
+  { id: '9', title: 'Frostbite', color: '#3A0CA3', image: require('@/assets/images/Frostbite.png') },
 ];
 
 export default function ConsultScreen() {
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+    <SafeAreaView style={styles.container} edges={['top']}>
+
+      <ScrollView>
         {/* Search Bar */}
         <View style={styles.searchContainer}>
           <Ionicons name="search" size={20} color={Colors.darkGray} />
@@ -38,8 +39,11 @@ export default function ConsultScreen() {
             {concerns.map((concern) => (
               <TouchableOpacity
                 key={concern.id}
-                style={[styles.concernCard, { backgroundColor: concern.color }]}
-                onPress={() => router.push(`/doctor/list?concern=${concern.title}`)}>
+                style={styles.concernCard}
+                onPress={() => router.push(`/doctor/${concern.id}?concern=${concern.title}`)}>
+                <View style={styles.concernImageContainer}>
+                  {concern.image && <Image source={concern.image} style={styles.concernImage} />}
+                </View>
                 <Text style={styles.concernText}>{concern.title}</Text>
               </TouchableOpacity>
             ))}
@@ -54,23 +58,22 @@ export default function ConsultScreen() {
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
           </View>
-          
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {[1, 2, 3].map((item) => (
-              <TouchableOpacity key={item} style={styles.doctorCard}>
+              <View key={item} style={styles.doctorCard}>
                 <View style={styles.doctorImagePlaceholder}>
                   <Ionicons name="person" size={40} color={Colors.white} />
                 </View>
                 <Text style={styles.doctorName}>Dr. Prem</Text>
                 <Text style={styles.doctorSpecialty}>Gynecology</Text>
                 <View style={styles.ratingContainer}>
-                  <Ionicons name="star" size={12} color="#FFD700" />
+                  <Ionicons name="star" size={16} color="#FFD700" />
                   <Text style={styles.ratingText}>4.5</Text>
                 </View>
                 <TouchableOpacity style={styles.consultButton}>
                   <Text style={styles.consultButtonText}>Consult</Text>
                 </TouchableOpacity>
-              </TouchableOpacity>
+              </View>
             ))}
           </ScrollView>
         </View>
@@ -81,23 +84,21 @@ export default function ConsultScreen() {
           <View style={styles.quickConsultContainer}>
             <TouchableOpacity style={styles.quickConsultCard}>
               <View style={styles.quickConsultIcon}>
-                <Ionicons name="videocam" size={32} color={Colors.primary} />
+                <Ionicons name="videocam" size={30} color={Colors.primary} />
               </View>
               <Text style={styles.quickConsultTitle}>Video Call</Text>
               <Text style={styles.quickConsultDesc}>Connect instantly</Text>
             </TouchableOpacity>
-            
             <TouchableOpacity style={styles.quickConsultCard}>
               <View style={styles.quickConsultIcon}>
-                <Ionicons name="call" size={32} color={Colors.primary} />
+                <Ionicons name="call" size={30} color={Colors.primary} />
               </View>
               <Text style={styles.quickConsultTitle}>Audio Call</Text>
               <Text style={styles.quickConsultDesc}>Quick & easy</Text>
             </TouchableOpacity>
-            
             <TouchableOpacity style={styles.quickConsultCard}>
               <View style={styles.quickConsultIcon}>
-                <Ionicons name="chatbubble" size={32} color={Colors.primary} />
+                <Ionicons name="chatbubble" size={30} color={Colors.primary} />
               </View>
               <Text style={styles.quickConsultTitle}>Chat</Text>
               <Text style={styles.quickConsultDesc}>24/7 available</Text>
@@ -108,12 +109,10 @@ export default function ConsultScreen() {
         {/* Emergency */}
         <View style={styles.section}>
           <View style={styles.emergencyCard}>
-            <Ionicons name="alert-circle" size={48} color={Colors.danger} />
+            <Ionicons name="alert-circle" size={40} color={Colors.danger} />
             <View style={styles.emergencyContent}>
               <Text style={styles.emergencyTitle}>Emergency Assistance</Text>
-              <Text style={styles.emergencyDesc}>
-                Need immediate help? Connect with emergency services
-              </Text>
+              <Text style={styles.emergencyDesc}>Need immediate help? Connect with emergency services</Text>
             </View>
             <TouchableOpacity style={styles.emergencyButton}>
               <Text style={styles.emergencyButtonText}>Call Now</Text>
@@ -134,8 +133,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.lightGray,
-    marginHorizontal: 20,
-    marginVertical: 16,
+    marginHorizontal: 16,
+    marginVertical: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 12,
@@ -147,8 +146,8 @@ const styles = StyleSheet.create({
     color: Colors.black,
   },
   section: {
-    marginTop: 24,
-    paddingHorizontal: 20,
+    marginTop: 20,
+    paddingHorizontal: 16,
   },
   sectionTitle: {
     fontSize: 18,
@@ -174,22 +173,33 @@ const styles = StyleSheet.create({
   concernCard: {
     width: '30%',
     aspectRatio: 1,
-    borderRadius: 12,
+    backgroundColor: '#E8F5E9',
+    borderRadius: 100,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
-    elevation: 2,
+    marginBottom: 16,
+    elevation: 1,
     shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+  },
+  concernImageContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  concernImage: {
+    width: 55,
+    height: 55,
+    resizeMode: 'contain',
   },
   concernText: {
-    color: Colors.white,
-    fontWeight: '600',
-    fontSize: 14,
+    color: Colors.black,
+    fontWeight: '500',
+    fontSize: 11,
     textAlign: 'center',
-    paddingHorizontal: 8,
+    paddingHorizontal: 4,
+    marginTop: 6,
   },
   doctorCard: {
     backgroundColor: Colors.white,

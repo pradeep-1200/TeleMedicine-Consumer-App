@@ -1,5 +1,6 @@
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { Appointment } from '@/types';
+import { storage, StorageKeys } from '@/utils/storage';
 
 interface AppointmentContextType {
   appointments: Appointment[];
@@ -11,37 +12,54 @@ interface AppointmentContextType {
 const AppointmentContext = createContext<AppointmentContextType | undefined>(undefined);
 
 export const AppointmentProvider = ({ children }: { children: ReactNode }) => {
-  const [appointments, setAppointments] = useState<Appointment[]>([
-    {
-      id: '1',
-      doctorId: '1',
-      doctorName: 'Dr. Prem',
-      date: '2023-11-23',
-      time: '17:28',
-      type: 'phone',
-      status: 'completed',
-      amount: 50
-    },
-    {
-      id: '2',
-      doctorId: '1',
-      doctorName: 'Dr. Prem',
-      date: '2023-09-13',
-      time: '10:30',
-      type: 'video',
-      status: 'upcoming',
-      amount: 150
-    }
-  ]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
 
-  const addAppointment = (appointment: Appointment) => {
-    setAppointments(prev => [...prev, appointment]);
+  useEffect(() => {
+    loadAppointments();
+  }, []);
+
+  const loadAppointments = async () => {
+    const stored = await storage.getItem<Appointment[]>(StorageKeys.APPOINTMENTS);
+    if (stored) {
+      setAppointments(stored);
+    } else {
+      const defaultAppointments = [
+        {
+          id: '1',
+          doctorId: '1',
+          doctorName: 'Dr. Prem',
+          date: '2023-11-23',
+          time: '17:28',
+          type: 'phone' as const,
+          status: 'completed' as const,
+          amount: 50
+        },
+        {
+          id: '2',
+          doctorId: '1',
+          doctorName: 'Dr. Prem',
+          date: '2023-09-13',
+          time: '10:30',
+          type: 'video' as const,
+          status: 'upcoming' as const,
+          amount: 150
+        }
+      ];
+      setAppointments(defaultAppointments);
+      await storage.setItem(StorageKeys.APPOINTMENTS, defaultAppointments);
+    }
   };
 
-  const updateAppointment = (id: string, updates: Partial<Appointment>) => {
-    setAppointments(prev =>
-      prev.map(appt => (appt.id === id ? { ...appt, ...updates } : appt))
-    );
+  const addAppointment = async (appointment: Appointment) => {
+    const updated = [...appointments, appointment];
+    setAppointments(updated);
+    await storage.setItem(StorageKeys.APPOINTMENTS, updated);
+  };
+
+  const updateAppointment = async (id: string, updates: Partial<Appointment>) => {
+    const updated = appointments.map(appt => (appt.id === id ? { ...appt, ...updates } : appt));
+    setAppointments(updated);
+    await storage.setItem(StorageKeys.APPOINTMENTS, updated);
   };
 
   const getAppointment = (id: string) => {

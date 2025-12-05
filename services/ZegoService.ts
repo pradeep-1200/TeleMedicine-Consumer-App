@@ -7,7 +7,7 @@ class ZegoService {
       const ZegoExpressEngine = require('zego-express-engine-reactnative');
       this.zego = ZegoExpressEngine;
     } catch (error) {
-      console.log('Zego SDK not available in this environment');
+      // Zego SDK not available in development environment
       this.zego = null;
     }
   }
